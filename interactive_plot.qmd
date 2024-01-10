@@ -1,0 +1,141 @@
+---
+title: "Interaction tests"
+format: html
+---
+
+```{ojs}
+
+Plot = import("https://esm.sh/@observablehq/plot")
+
+fruits = ["Apple", "Orange", "Pear", "Lemon"]
+fruit_data = [
+  {fruit: "Apple", weight: 1.1},
+  {fruit: "Orange", weight: 2.3},
+  {fruit: "Pear", weight: 1.2},
+  {fruit: "Lemon", weight: 1.8}
+]
+
+fruits
+
+fruit_data
+
+set_val = function(input, value) {
+  input.value = value;
+  input.dispatchEvent(new Event("input"))
+};
+
+```
+
+Some text
+
+```{ojs}
+viewof myfruit = Inputs.input(null)
+
+myfruit
+
+Inputs.bind(Inputs.select(fruits), viewof myfruit)
+
+```
+
+## Interactive plot
+
+```{ojs}
+fruit_plot = Plot.plot({
+  x: {label: "Fruit"},
+  y: {label: "Weight"},
+  marks: [
+    Plot.barY(fruit_data, {
+      x: "fruit", y: "weight", fill: "#999999"
+    }),
+    Plot.barY(fruit_data, {
+      x: "fruit", y: "weight", fill: "#ff0000",
+      filter: (d) => myfruit == d.fruit
+    }),
+    Plot.barY(fruit_data, Plot.pointer({
+      x: "fruit", y: "weight", opacity: 0
+    }))
+  ]
+});
+```
+
+Select on `mousedown`
+
+```{ojs}
+//| output: false
+
+fruit_plot.addEventListener("mousedown", (event) => {
+  if (fruit_plot.value != null) {
+    console.log(fruit_plot.value)
+    console.log(fruit_plot.value.fruit)
+    set_val(viewof myfruit, fruit_plot.value.fruit)
+  } else {
+    console.log("bad selection")
+  }
+  
+});
+
+```
+
+```{ojs}
+myfruit
+```
+
+## Linked brushing
+
+```{ojs}
+new_fruit_data = [
+  {fruit: "Apple", market: "London", weight: 1.1},
+  {fruit: "Orange", market: "London", weight: 2.3},
+  {fruit: "Pear", market: "London", weight: 1.2},
+  {fruit: "Lemon", market: "London", weight: 1.8},
+  {fruit: "Apple", market: "Oxford", weight: 0.4},
+  {fruit: "Orange", market: "Oxford", weight: 1.3},
+  {fruit: "Pear", market: "Oxford", weight: 1.8},
+  {fruit: "Lemon", market: "Oxford", weight: 2.1},
+  {fruit: "Apple", market: "Manchester", weight: 1.4},
+  {fruit: "Orange", market: "Manchester", weight: 1.7},
+  {fruit: "Pear", market: "Manchester", weight: 1.3},
+  {fruit: "Lemon", market: "Manchester", weight: 1.2}
+]
+
+hover_data = new_fruit_data.filter(function(df) {
+  return my_market == df.market
+});
+
+new_plot = Plot.plot({
+  x: {label: "Weight"},
+  y: {label: "Fruit"},
+  marks: [
+    Plot.dot(new_fruit_data, {
+      x: "weight", y: "fruit", fill: "#999999"
+    }),
+    Plot.dot(hover_data, {
+      x: "weight", y: "fruit", fill: "#ff0000"
+    }),
+    Plot.tip(new_fruit_data, Plot.pointer({
+      x: "weight", y: "fruit", title: "market",
+      filter: (d) => d.market,
+      title: (d) => d.market,
+    }))
+  ]
+});
+
+viewof my_market = Inputs.input(null)
+
+```
+
+```{ojs}
+//| output: false
+
+new_plot.addEventListener("input", (event) => {
+  if (new_plot.value != null) {
+    console.log(new_plot.value)
+    console.log(new_plot.value.fruit)
+    set_val(viewof my_market, new_plot.value.market)
+  } else {
+    console.log("bad selection")
+  }
+  
+});
+
+```
